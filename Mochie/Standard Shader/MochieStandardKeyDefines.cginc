@@ -37,6 +37,7 @@
 
 //VRSL Stuff
 #define VRSL_ENABLED defined(_VRSL_ON)
+#define VRSL_GI_ENABLED defined(_VRSL_GI_ON)
 //End VRSL Stuff
 
 #endif // MOCHIE_STANDARD_KEYDEFINES_INCLUDED

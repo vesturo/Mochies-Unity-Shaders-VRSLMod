@@ -156,7 +156,7 @@ int				_UVRainMask;
 int				_RainToggle;
 
 
-#ifdef _VRSL_GI
+#ifdef _VRSL_GI_ON
 	#ifdef      _VRSL_GLOBALLIGHTTEXTURE
 		Texture2D   _Udon_VRSL_GI_LightTexture;
 	#else
@@ -386,7 +386,7 @@ float2 SelectUVSet(VertexInput v, int selection){
 }
 
 
-#ifdef _VRSL_GI
+#ifdef _VRSL_GI_ON
     float2 VRSLShadowMaskCoords(VertexInput v)
     {
         

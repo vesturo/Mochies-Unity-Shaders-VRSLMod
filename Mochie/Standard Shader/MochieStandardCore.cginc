@@ -15,7 +15,7 @@
 
 static float3 TangentNormal = float3(0,0,1);
 
-#ifdef _VRSL_GI
+#ifdef _VRSL_GI_ON
     #include "Assets/VRSL Addons/VRSL-GI Shader Package/VRSLGI-Functions.cginc"
 #endif
 //-------------------------------------------------------------------------------------
@@ -463,7 +463,7 @@ struct VertexOutputForwardBase
     #if VRSL_ENABLED
     nointerpolation float3 dmxColor       : TEXCOORD19;
     #endif
-    #ifdef _VRSL_GI
+    #ifdef _VRSL_GI_ON
         float2 shadowMaskUV               : TEXCOORD20;
     #endif
 	float4 color                          : COLOR;
@@ -545,7 +545,7 @@ VertexOutputForwardBase vertForwardBase (VertexInput v)
         o.dmxColor = DMXEmission(o.tex.xy);
     #endif
 
-    #ifdef _VRSL_GI
+    #ifdef _VRSL_GI_ON
        o.shadowMaskUV = VRSLShadowMaskCoords(v);
     #endif
     //End VRSL Stuff
@@ -778,9 +778,9 @@ half4 fragForwardBaseInternal (VertexOutputForwardBase i, bool frontFace)
 				s.metallic, s.thickness, s.subsurfaceColor, atten, i.ambientOrLightmapUV, i.color, gi.light, gi.indirect
 			);
 
-    #if _VRSL_GI
+    #if _VRSL_GI_ON
         //#ifndef VRSL_GI_PROJECTOR
-        // #if defined(_VRSL_GI) && defined(_VRSL_GI_SPECULARHIGHLIGHTS) && !defined(_VRSL_MG_MAP) && !defined(VRSL_GI_PROJECTOR)
+        // #if defined(_VRSL_GI_ON) && defined(_VRSL_GI_SPECULARHIGHLIGHTS) && !defined(_VRSL_MG_MAP) && !defined(VRSL_GI_PROJECTOR)
             float2 mg = float2(s.metallic, s.smoothness);
         // #else
         //     float2 mg = VRSLMetallicGloss(i.tex.xy);

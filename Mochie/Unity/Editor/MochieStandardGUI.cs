@@ -749,14 +749,14 @@ internal class MochieStandardGUI : ShaderGUI {
 			}
 			else 
 			{
-				material.SetFloat("useVRSLGI", 0f);
-				material.DisableKeyword("_VRSL_GI");
+				material.SetFloat("_VRSLGIToggle", 0f);
+				material.DisableKeyword("_VRSL_GI_ON");
 			}
 
 
 
 
-//material.SetFloat("useVRSLGI",EditorGUILayout.Toggle("Use VRSL GI",FloatToBool(material.GetFloat("useVRSLGI"))) ? 1.0f : 0.0f);
+//material.SetFloat("_VRSLGIToggle",EditorGUILayout.Toggle("Use VRSL GI",FloatToBool(material.GetFloat("_VRSLGIToggle"))) ? 1.0f : 0.0f);
 
 
 
@@ -1545,8 +1545,8 @@ internal class MochieStandardGUI : ShaderGUI {
 	{
 		MGUI.PropertyGroup(()=>{
 		//m_MaterialEditor.ShaderProperty(vrslToggle, "Enable");
-		material.SetFloat("useVRSLGI",EditorGUILayout.Toggle("Enable",FloatToBool(material.GetFloat("useVRSLGI"))) ? 1.0f : 0.0f);
-		MGUI.ToggleGroup(material.GetFloat("useVRSLGI") == 0);
+		material.SetFloat("_VRSLGIToggle",EditorGUILayout.Toggle("Enable",FloatToBool(material.GetFloat("_VRSLGIToggle"))) ? 1.0f : 0.0f);
+		MGUI.ToggleGroup(material.GetFloat("_VRSLGIToggle") == 0);
 		MGUI.PropertyGroupLayer(()=>{
 			if(material.shader.name.Contains("Project") == true){
 				me.ShaderProperty(_VRSLGIQuadLightingSystem, "Priority System");
@@ -1912,7 +1912,7 @@ internal class MochieStandardGUI : ShaderGUI {
 		// MGUI.SetKeyword(material, "_VRSL_MIX_ADD", material.GetInt("_DMXEmissionMapMix") == 1);
 		// MGUI.SetKeyword(material, "_VRSL_MIX_MIX", material.GetInt("_DMXEmissionMapMix") == 2);
 
-		MGUI.SetKeyword(material,"_VRSL_GI", material.GetFloat("useVRSLGI") == 1.0f);
+		MGUI.SetKeyword(material,"_VRSL_GI_ON", material.GetFloat("_VRSLGIToggle") == 1.0f);
         MGUI.SetKeyword(material,"_VRSL_GI_SPECULARHIGHLIGHTS", material.GetFloat("useVRSLGISpecular") == 1.0f);
 
 		MGUI.SetKeyword(material, "_VRSL_SHADOWMASK1", material.GetInt("_UseVRSLShadowMask1") == 1);

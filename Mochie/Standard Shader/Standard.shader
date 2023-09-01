@@ -274,7 +274,7 @@ Shader "Mochie/Standard" {
 
 
 
-		        [ToggleOff] useVRSLGI("Use VRSL GI", Float) = 0.0
+		        [ToggleOff] _VRSLGIToggle("Use VRSL GI", Float) = 0.0
         [ToggleOff] _UseGlobalVRSLLightTexture("Use Global VRSL Light Texture", Float) = 0.0
         [ToggleOff] useVRSLGISpecular("Use VRSL GI Specular", Float) = 1.0
         _VRSLDiffuseMix ("VRSL Diffuse Mix", Range(0, 1)) = 1.0
@@ -358,7 +358,7 @@ Shader "Mochie/Standard" {
 			#define MOCHIE_STANDARD
 			#define VRLSGI_USE_BUILTIN_SPECULAR
 
-            #pragma shader_feature_local _VRSL_GI
+            #pragma shader_feature_local _VRSL_GI_ON
             #pragma shader_feature_local _VRSL_GI_SPECULARHIGHLIGHTS
             #pragma shader_feature_local _VRSL_SPECFUNC_GGX _VRSL_SPECFUNC_BECKMAN _VRSL_SPECFUNC_PHONG
             #pragma shader_feature_local _VRSL_SHADOWMASK_UV0 _VRSL_SHADOWMASK_UV1
@@ -404,6 +404,7 @@ Shader "Mochie/Standard" {
             #pragma multi_compile_fwdbase
             #pragma multi_compile_instancing
 			#define VRSL_ENABLED defined(_VRSL_ON)
+			#define VRSL_GI_ENABLED defined(_VRSL_GI_ON)
             #include "MochieStandardCoreForward.cginc"
             ENDCG
         }
