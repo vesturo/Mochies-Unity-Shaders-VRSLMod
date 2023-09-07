@@ -479,11 +479,7 @@ VertexOutputForwardBase vertForwardBase (VertexInput v)
     UNITY_TRANSFER_INSTANCE_ID(v, o);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
-    #ifdef _VRSL_GI
-       o.shadowMaskUV = VRSLShadowMaskCoords(v);
-    #endif
-
-    #ifdef _VRSL_GI
+    #ifdef _VRSL_GI_ON
        o.shadowMaskUV = VRSLShadowMaskCoords(v);
     #endif
 
@@ -667,14 +663,10 @@ half4 fragForwardBaseInternal (VertexOutputForwardBase i, bool frontFace)
     UNITY_SETUP_INSTANCE_ID(i);
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
 
-    // #if  defined(_AREALIT_USE_GI_UVS) && defined(_VRSL_GI) 
-        // half3 occlusion = Occlusion(i.tex, i.shadowMaskUV.xy, sd);
-    // #else
-        // #if  defined(_AREALIT_USE_GI_UVS) && defined(_VRSL_GI) 
+    // #if  defined(_AREALIT_USE_GI_UVS) && defined(_VRSL_GI_ON) 
         // half3 occlusion = Occlusion(i.tex, i.shadowMaskUV.xy, sd);
     // #else
         half3 occlusion = Occlusion(i.tex, i.tex4.zw, sd);
-    // #endif
     // #endif
     float perceptualRoughness = SmoothnessToPerceptualRoughness(s.smoothness);
     if (_GSAA == 1)
@@ -683,14 +675,10 @@ half4 fragForwardBaseInternal (VertexOutputForwardBase i, bool frontFace)
     float clampedRoughness = max(roughness, 0.002);
 
     #if AREALIT_ENABLED
-        #if  defined(_AREALIT_USE_GI_UVS) && defined(_VRSL_GI) 
-            float4 alOcclusion = tex2D(_AreaLitOcclusion, i.shadowMaskUV.xy);
-        #else
-            #if  defined(_AREALIT_USE_GI_UVS) && defined(_VRSL_GI) 
+        #if  defined(_AREALIT_USE_GI_UVS) && defined(_VRSL_GI_ON) 
             float4 alOcclusion = tex2D(_AreaLitOcclusion, i.shadowMaskUV.xy);
         #else
             float4 alOcclusion = tex2D(_AreaLitOcclusion, i.tex4);
-        #endif
         #endif
         AreaLightFragInput ai;
         ai.pos = s.posWorld;
@@ -802,7 +790,7 @@ half4 fragForwardBaseInternal (VertexOutputForwardBase i, bool frontFace)
 
     #if _VRSL_GI_ON
         //#ifndef VRSL_GI_PROJECTOR
-        // #if defined(_VRSL_GI) && defined(_VRSL_GI_SPECULARHIGHLIGHTS) && !defined(_VRSL_MG_MAP) && !defined(VRSL_GI_PROJECTOR)
+        // #if defined(_VRSL_GI_ON) && defined(_VRSL_GI_SPECULARHIGHLIGHTS) && !defined(_VRSL_MG_MAP) && !defined(VRSL_GI_PROJECTOR)
             float2 mg = float2(s.metallic, abs(_VRSLGIInvertSmoothness - saturate((lerp(s.smoothness, _VRSLGISmoothnessBooster, _VRSLGISmoothnessMapBlend))*_VRSLSmoothnessMultiplier)));
         // #else
         //     float2 mg = VRSLMetallicGloss(i.tex.xy);
