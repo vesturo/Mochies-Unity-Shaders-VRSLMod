@@ -483,6 +483,10 @@ VertexOutputForwardBase vertForwardBase (VertexInput v)
        o.shadowMaskUV = VRSLShadowMaskCoords(v);
     #endif
 
+    #ifdef _VRSL_GI
+       o.shadowMaskUV = VRSLShadowMaskCoords(v);
+    #endif
+
     //VRSL Stuff
     #if VRSL_ENABLED
         uint dmx = GetDMXChannel();
@@ -549,13 +553,7 @@ VertexOutputForwardBase vertForwardBase (VertexInput v)
         o.dmxColor = DMXEmission(o.tex.xy);
     #endif
 
-<<<<<<< HEAD
-    #ifdef _VRSL_GI_ON
-       o.shadowMaskUV = VRSLShadowMaskCoords(v);
-    #endif
-=======
 
->>>>>>> 4a40d6c40f7a00387ed70c3d6ec4d0213627daeb
     //End VRSL Stuff
 
     UNITY_TRANSFER_FOG_COMBINED_WITH_EYE_VEC(o,o.pos);
@@ -672,7 +670,11 @@ half4 fragForwardBaseInternal (VertexOutputForwardBase i, bool frontFace)
     // #if  defined(_AREALIT_USE_GI_UVS) && defined(_VRSL_GI) 
         // half3 occlusion = Occlusion(i.tex, i.shadowMaskUV.xy, sd);
     // #else
+        // #if  defined(_AREALIT_USE_GI_UVS) && defined(_VRSL_GI) 
+        // half3 occlusion = Occlusion(i.tex, i.shadowMaskUV.xy, sd);
+    // #else
         half3 occlusion = Occlusion(i.tex, i.tex4.zw, sd);
+    // #endif
     // #endif
     float perceptualRoughness = SmoothnessToPerceptualRoughness(s.smoothness);
     if (_GSAA == 1)
@@ -684,7 +686,11 @@ half4 fragForwardBaseInternal (VertexOutputForwardBase i, bool frontFace)
         #if  defined(_AREALIT_USE_GI_UVS) && defined(_VRSL_GI) 
             float4 alOcclusion = tex2D(_AreaLitOcclusion, i.shadowMaskUV.xy);
         #else
+            #if  defined(_AREALIT_USE_GI_UVS) && defined(_VRSL_GI) 
+            float4 alOcclusion = tex2D(_AreaLitOcclusion, i.shadowMaskUV.xy);
+        #else
             float4 alOcclusion = tex2D(_AreaLitOcclusion, i.tex4);
+        #endif
         #endif
         AreaLightFragInput ai;
         ai.pos = s.posWorld;
@@ -796,13 +802,8 @@ half4 fragForwardBaseInternal (VertexOutputForwardBase i, bool frontFace)
 
     #if _VRSL_GI_ON
         //#ifndef VRSL_GI_PROJECTOR
-<<<<<<< HEAD
-        // #if defined(_VRSL_GI_ON) && defined(_VRSL_GI_SPECULARHIGHLIGHTS) && !defined(_VRSL_MG_MAP) && !defined(VRSL_GI_PROJECTOR)
-            float2 mg = float2(s.metallic, s.smoothness);
-=======
         // #if defined(_VRSL_GI) && defined(_VRSL_GI_SPECULARHIGHLIGHTS) && !defined(_VRSL_MG_MAP) && !defined(VRSL_GI_PROJECTOR)
             float2 mg = float2(s.metallic, abs(_VRSLGIInvertSmoothness - saturate((lerp(s.smoothness, _VRSLGISmoothnessBooster, _VRSLGISmoothnessMapBlend))*_VRSLSmoothnessMultiplier)));
->>>>>>> 4a40d6c40f7a00387ed70c3d6ec4d0213627daeb
         // #else
         //     float2 mg = VRSLMetallicGloss(i.tex.xy);
         // #endif
