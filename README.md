@@ -9,3 +9,13 @@ For more information, or help with any of my shaders, feel free to add me on dis
 [Official VRChat group](https://vrc.group/MOCHIE.7640)
 
 NOTE: THESE SHADERS ARE ONLY COMPATIBLE WITH FORWARD RENDERING IN THE BUILT IN PIPELINE
+
+# Keywords & Properties
+
+AreaLit:
+- Keyword: _AREALIT_ON
+- Property: _AreaLitToggle
+
+VRSLGi:
+- Keyword: _VRSL_GI_ON
+- Property: _VRSLGIToggle
