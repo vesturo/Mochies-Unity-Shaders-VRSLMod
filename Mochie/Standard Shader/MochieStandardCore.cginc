@@ -674,7 +674,7 @@ half4 fragForwardBaseInternal (VertexOutputForwardBase i, bool frontFace)
         #if  defined(_AREALIT_USE_GI_UVS) && defined(_VRSL_GI) 
             float4 alOcclusion = MOCHIE_SAMPLE_TEX2D_SAMPLER(_AreaLitOcclusion, VRSL_BilinearClampSampler, i.shadowMaskUV.xy);
         #else
-            float4 alOcclusion = MOCHIE_SAMPLE_TEX2D_SAMPLER(_AreaLitOcclusion, VRSL_BilinearClampSampler,i.tex4);
+            float4 alOcclusion = tex2D(_AreaLitOcclusion,i.tex4);
         #endif
         AreaLightFragInput ai;
         ai.pos = s.posWorld;
