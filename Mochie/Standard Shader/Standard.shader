@@ -5,7 +5,7 @@
 // https://github.com/MochiesCode/Mochies-Unity-Shaders
 
 // Does not support deferred rendering
-// Does not meet the same instruction count restrictions as normal standard, intended for modern PC use only
+// Does not meet the same instruction count restrictions for older hardware as normal standard
 
 Shader "Mochie/Standard" {
     Properties {
@@ -191,6 +191,7 @@ Shader "Mochie/Standard" {
 		_GSAAStrength("GSAA Strength", Float) = 1
 		_ReflShadowStrength("Shadowed Reflection Strength", Float) = 1
 		_ReflVertexColorStrength("Vertex Color Reflection Strength", Float) = 1
+		[ToggleUI]_VertexBaseColor("Vertex Base Color", Int) = 0
 
 		_ContrastReflShad("Contrast", Float) = 1
 		_BrightnessReflShad("Brightness", Float) = 100
@@ -288,11 +289,11 @@ Shader "Mochie/Standard" {
         _VRSLSpecularStrength("VRSL Specular Strength", Range(0.0, 1.0)) = 0.5
         _VRSLGIStrength("GI Strength", Range(0.1, 500)) = 1.0
         _VRSLSpecularMultiplier("Specular Multiplier", Range(1, 10)) = 1.0
-		_VRSLSmoothnessMultiplier("Smoothness Multiplier", Range(1, 10)) = 1.0
+		_VRSLSmoothnessMultiplier("Smoothness Multiplier", Range(0, 10)) = 1.0
 
 		[ToggleUI] _VRSLGIInvertSmoothness ("Invert VRSL GI Smoothness", Int) = 0
 		_VRSLGISmoothnessBooster("VRSL GI General Smoothness", Range(0.0, 1.0)) = 0
-		_VRSLGISmoothnessMapBlend("VRSL GI Smoothness Map Blend", Range(0.0, 1.0)) = 0
+		_VRSLGISmoothnessMapBlend("VRSL GI Smoothness Map Blend", Range(0.0, 1.0)) = 1
 
 		[ToggleUI] _UseVRSLShadowMask1 ("Use VRSL Shadow Mask 1", Int) = 0
         [NoScaleOffset] _VRSLShadowMask1("VRSL GI ShadowMask 1", 2D) = "white" {}
@@ -319,6 +320,10 @@ Shader "Mochie/Standard" {
         [Enum(GGX,0, Beckman,1, Blinn Phong,2)]_VRSLSpecularFunction("VRSL Specular Function", Int) = 0
 
         [Enum(UV0,0,UV1,1, UV2,2, UV3,3, UV4,4)]_VRSLShadowMaskUVSet("UV Set for occlusion map", Float) = 1
+
+		
+        _VRSLGISpecularClamp("VRSL GI Specular Clamp", Range(1.0, 50000.0)) = 50000
+        _VRSLGIDiffuseClamp("VRSL GI Diffuse Clamp", Range(1.0, 10000.0)) = 10000
 
         [NoScaleOffset] _VRSL_LightTexture("VRSL Light Texture", 2D) = "white" {}
         [NoScaleOffset] _VRSL_LightCounter("VRSL Light Counter Texture", 2D) = "white" {}

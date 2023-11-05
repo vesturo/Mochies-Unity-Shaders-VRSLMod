@@ -27,7 +27,7 @@ internal class MochieStandardGUI : ShaderGUI {
 		//End VRSL Stuff
 	}, 1);
 
-	string versionLabel = "v1.24";
+	string versionLabel = "v1.25";
 	public static string receiverText = "AreaLit Maps";
 	public static string emitterText = "AreaLit Light";
 	public static string projectorText = "AreaLit Projector";
@@ -274,6 +274,7 @@ internal class MochieStandardGUI : ShaderGUI {
 	MaterialProperty ssrHeight = null;
 
 	MaterialProperty _VRSLGIStrength = null;
+	MaterialProperty _VRSLGISpecularClamp = null;
     MaterialProperty _VRSLDiffuseMix = null;
     MaterialProperty _VRSLSpecularMultiplier = null;
     MaterialProperty _VRSLMetallicGlossMap = null;
@@ -325,6 +326,7 @@ internal class MochieStandardGUI : ShaderGUI {
 	        MaterialProperty _VRSLGlossiness = null;
         MaterialProperty _VRSLSpecularStrength = null;
 	MaterialProperty unityFogToggle = null;
+	MaterialProperty vertexBaseColor = null;
 
 	MaterialEditor me;
 
@@ -368,6 +370,7 @@ internal class MochieStandardGUI : ShaderGUI {
 		_VRSLGlossiness = FindProperty("_VRSLGlossiness", props);
 		_VRSLSpecularStrength = FindProperty("_VRSLSpecularStrength", props);
 		_VRSLGIStrength = FindProperty("_VRSLGIStrength", props);
+		_VRSLGISpecularClamp = FindProperty("_VRSLGISpecularClamp", props);
 		_VRSLDiffuseMix = FindProperty("_VRSLDiffuseMix", props); 
 		_VRSLSpecularMultiplier = FindProperty("_VRSLSpecularMultiplier", props);  
 		_VRSLSpecularShine = FindProperty("_VRSLSpecularShine", props);
@@ -612,6 +615,7 @@ internal class MochieStandardGUI : ShaderGUI {
 		//End VRSL Stuff
 		ssrHeight = FindProperty("_SSRHeight", props);
 		unityFogToggle = FindProperty("_UnityFogToggle", props);
+		vertexBaseColor = FindProperty("_VertexBaseColor", props);
 	}
 
 	public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] props){
@@ -1243,7 +1247,8 @@ internal class MochieStandardGUI : ShaderGUI {
 			MGUI.PropertyGroupLayer(()=>{
 				MGUI.SpaceN3();
 				me.ShaderProperty(bicubicLightmap, Tips.bicubicLightmap);
-				me.ShaderProperty(unityFogToggle, "Unity Scene Fog");
+				me.ShaderProperty(unityFogToggle, Tips.unityFogToggleText);
+				me.ShaderProperty(vertexBaseColor, Tips.vertexBaseColorText);
 				if (!isLite)
 					me.ShaderProperty(mirrorToggle, Tips.mirrorMode);
 				me.EnableInstancingField();
@@ -1616,12 +1621,13 @@ internal class MochieStandardGUI : ShaderGUI {
 			// _VRSLGlossiness.floatValue = Mathf.Lerp(1.0f, 0.1f, g);
 			// EditorGUILayout.Space(4);
 			// me.ShaderProperty(_VRSLSpecularStrength, "VRSL Metallic/Specular Mixture");
-			me.ShaderProperty(_VRSLGIInvertSmoothness,"Invert Smoothness/Roughness");
-			me.ShaderProperty(_VRSLGISmoothnessMapBlend, "Smoothness/Roughness Map Blend");
-			me.ShaderProperty(_VRSLGISmoothnessBooster,"Base Smoothness/Roughness Amount");
-			me.ShaderProperty(_VRSLSmoothnessMultiplier,"Smoothness/Roughness Multiplier");
+			// me.ShaderProperty(_VRSLGIInvertSmoothness,"Invert Smoothness/Roughness");
+			// me.ShaderProperty(_VRSLGISmoothnessMapBlend, "Smoothness/Roughness Map Blend");
+			// me.ShaderProperty(_VRSLGISmoothnessBooster,"Base Smoothness/Roughness Amount");
+			// me.ShaderProperty(_VRSLSmoothnessMultiplier,"Smoothness/Roughness Multiplier");
 			me.ShaderProperty(_VRSLSpecularMultiplier,"VRSL Specular Multiplier");
 			me.ShaderProperty(_VRSLSpecularShine, "Specular Shine Power");
+			me.ShaderProperty(_VRSLGISpecularClamp, "Specular Clamp (Sets Max Brightness)");
 			});});MGUI.ToggleGroupEnd();
 			if(material.shader.name.Contains("Project") == false)
 			{

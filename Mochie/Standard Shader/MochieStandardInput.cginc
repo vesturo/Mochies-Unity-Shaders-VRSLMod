@@ -20,14 +20,20 @@
 	#include "Assets/AreaLit/Shader/Lighting.hlsl"
 #endif
 
-#ifdef LTCGI
-	#include "Assets/_pi_/_LTCGI/Shaders/LTCGI.cginc"
+#if LTCGI_ENABLED
+	#include "Packages/at.pimaker.ltcgi/Shaders/LTCGI.cginc"
+#endif
+
+#ifdef _VRSL_GI
+    #include "Assets/VRSL Addons/VRSL-GI Shader Package/VRSLGI-Functions.cginc"
 #endif
 
 //VRSL Stuff
 #if VRSL_ENABLED
 	#include "MochieVRSLDMX.cginc"
 #endif
+
+
 //End VRSL Stuff
 
 //---------------------------------------
@@ -157,69 +163,10 @@ int				_RainToggle;
 
 
 #ifdef _VRSL_GI
-	#ifdef      _VRSL_GLOBALLIGHTTEXTURE
-		Texture2D   _Udon_VRSL_GI_LightTexture;
-	#else
-		Texture2D   _VRSL_LightTexture;
-		uniform float4  _VRSL_LightTexture_TexelSize;
-	#endif
-
-		
-		SamplerState    VRSL_BilinearClampSampler, VRSLGI_PointClampSampler;
-		int     _Udon_VRSL_GI_LightCount;
-		sampler2D   _VRSLMetallicGlossMap;
-		half        _VRSLMetallicMapStrength;
-		half        _VRSLGlossMapStrength;
-		half        _VRSLSmoothnessChannel;
-		half        _VRSLMetallicChannel;
-		half        _VRSLInvertMetallicMap;
-		half        _VRSLInvertSmoothnessMap;
-
-		Texture2D   _VRSLShadowMask1;
-		Texture2D   _VRSLShadowMask2;
-		Texture2D   _VRSLShadowMask3;
-
-		int         _UseVRSLShadowMask1;
-		int         _UseVRSLShadowMask2;
-		int         _UseVRSLShadowMask3;
-
-
-		int         _VRSLGIVertexFalloff;
-		float       _VRSLGIVertexAttenuation;
-
-
-	half        _VRSLSpecularShine;
-	half        _VRSLGlossiness;
-	half        _VRSLSpecularStrength;
-	half        _VRSLGIStrength;
-	half        _VRSLDiffuseMix;
-	half        _VRSLSpecularMultiplier;
-
-	half        _UseVRSLShadowMask1RStrength;
-	half        _UseVRSLShadowMask1GStrength;
-	half        _UseVRSLShadowMask1BStrength;
-	half        _UseVRSLShadowMask1AStrength;
-
-	half        _UseVRSLShadowMask2RStrength;
-	half        _UseVRSLShadowMask2GStrength;
-	half        _UseVRSLShadowMask2BStrength;
-	half        _UseVRSLShadowMask2AStrength;
-
-	half        _UseVRSLShadowMask3RStrength;
-	half        _UseVRSLShadowMask3GStrength;
-	half        _UseVRSLShadowMask3BStrength;
-	half        _UseVRSLShadowMask3AStrength;
-
-	half        _VRSLShadowMaskUVSet;
-
-	//float4      _ProjectorColor;
-	half        _VRSLProjectorStrength;
-
 	int			_VRSLGIInvertSmoothness;
 	half		_VRSLGISmoothnessBooster;
 	half		_VRSLGISmoothnessMapBlend;
 	half		_VRSLSmoothnessMultiplier;
-
  #endif
 
 int				UVShiftToggle;
@@ -231,6 +178,7 @@ half			_UV0ShiftY;
 
 int _Filtering;
 int _UnityFogToggle;
+int _VertexBaseColor;
 
 float _ReflectionStrength, _SpecularStrength;
 float _ReflShadowStrength;
@@ -242,12 +190,14 @@ int _DetailUseSmoothness;
 int _ReflVertexColor;
 int _GSAA;
 
-float _LTCGIStrength;
-float _AreaLitStrength;
-float _AreaLitRoughnessMult;
-sampler2D _AreaLitOcclusion;
-float4 _AreaLitOcclusion_ST;
-int _OcclusionUVSet;
+#ifndef _VRSL_GI
+	float _LTCGIStrength;
+	float _AreaLitStrength;
+	float _AreaLitRoughnessMult;
+	sampler2D _AreaLitOcclusion;
+	float4 _AreaLitOcclusion_ST;
+	int _OcclusionUVSet;
+#endif
 
 sampler2D _RimMask;
 float4 _RimMask_ST;
@@ -486,7 +436,7 @@ half DetailMask(float2 uv)
     return detailMask[_DetailMaskChannel];
 }
 
-half3 Albedo(float4 texcoords, float2 detailTexCoords, SampleData sd)
+half3 Albedo(float4 texcoords, float2 detailTexCoords, float3 vertexColor, SampleData sd)
 {
 	half3 albedo = _Color.rgb * SampleTexture(_MainTex, texcoords.xy, sd).rgb;
 	albedo = Filtering(albedo, _Hue, _Saturation, _Brightness, _Contrast, 0);
@@ -497,6 +447,8 @@ half3 Albedo(float4 texcoords, float2 detailTexCoords, SampleData sd)
 		detailAlbedo.rgb = _DetailColor.rgb * Filtering(detailAlbedo.rgb, _HueDet, _SaturationDet, _BrightnessDet, _ContrastDet, 0);
 		albedo = BlendColorsAlpha(albedo, detailAlbedo.rgb, _DetailAlbedoBlend, mask, detailAlbedo.a);
 	#endif
+	if (_VertexBaseColor == 1)
+		albedo *= vertexColor;
     return albedo;
 }
 
