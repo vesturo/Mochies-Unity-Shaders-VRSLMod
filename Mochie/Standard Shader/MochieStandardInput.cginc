@@ -22,10 +22,13 @@
 
 #if LTCGI_ENABLED
 	#include "Packages/at.pimaker.ltcgi/Shaders/LTCGI.cginc"
+<<<<<<< HEAD
 #endif
 
 #ifdef _VRSL_GI
     #include "Assets/VRSL Addons/VRSL-GI Shader Package/VRSLGI-Functions.cginc"
+=======
+>>>>>>> 95d0bde4656da50a1e1060adf9761f5007c58fd9
 #endif
 
 //VRSL Stuff
