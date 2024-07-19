@@ -11,9 +11,6 @@
 #include "../Common/Sampling.cginc"
 #include "MochieStandardSampling.cginc"
 
-#if VRSL_ENABLED
-	#include "MochieVRSLDMX.cginc"
-#endif
 
 #if (defined(_ALPHABLEND_ON) || defined(_ALPHAPREMULTIPLY_ON)) && defined(UNITY_USE_DITHER_MASK_FOR_ALPHABLENDED_SHADOWS)
     #define UNITY_STANDARD_USE_DITHER_MASK 1
@@ -61,11 +58,13 @@ half        _Metallic;
 	float2 		uvOffset;
 #endif
 
+
 Texture2D 	_AlphaMask;
 SamplerState sampler_AlphaMask;
 float4		_AlphaMask_ST;
 float		_AlphaMaskOpacity;
 int			_AlphaMaskChannel;
+int 		_UVPri;
 half		_UVAlphaMask;
 half		_UV4Rotate;
 half		_UV0Rotate;
@@ -74,12 +73,14 @@ float2		_UV0Scroll;
 float2		_UV1Scroll;
 float2		_UV4Scroll;
 
-//VRSL Stuff
-#if VRSL_ENABLED
-	int				_ThirteenChannelMode;
-	float4 			_FixtureRotationOrigin;
-#endif
-//End VRSL Stuff
+int _UVPriSwizzle;
+int _UVSecSwizzle;
+int _UVEmissMaskSwizzle;
+int _UVHeightMaskSwizzle;
+int _UVAlphaMaskSwizzle;
+int _UVRainMaskSwizzle;
+int _UVRimMaskSwizzle;
+int _UVDetailMaskSwizzle;
 
 Texture2D _PackedMap;
 int _RoughnessMult, _MetallicMult, _OcclusionMult, _HeightMult;
@@ -114,21 +115,6 @@ half ShadowGetOneMinusReflectivity(half2 uv, SampleData sd)
     return OneMinusReflectivityFromMetallic(metallicity);
 }
 
-#if VRSL_ENABLED
-float4 DMXMovement(float4 input, float4 vertexColor, int normalsCheck, float pan, float tilt, float4 rotationOrigin)
-{
-	#if VRSL_ENABLED
-		#if _VRSLTHIRTEENCHAN_ON
-			return calculateRotations(input, vertexColor, normalsCheck, pan, tilt, rotationOrigin);
-		#else
-			return input;
-		#endif
-	#else
-		return input;
-	#endif
-}
-#endif
-
 // SHADOW_ONEMINUSREFLECTIVITY(): workaround to get one minus reflectivity based on UNITY_SETUP_BRDF_INPUT
 #define SHADOW_JOIN2(a, b) a##b
 #define SHADOW_JOIN(a, b) SHADOW_JOIN2(a,b)
@@ -144,9 +130,6 @@ struct VertexInput
 	float2 uv3      : TEXCOORD3;
 	float2 uv4      : TEXCOORD4;
     half4 tangent   : TANGENT;
-	#if VRSL_ENABLED
-	float4 color	: COLOR_Centroid;
-	#endif
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
@@ -159,22 +142,35 @@ struct VertexOutputShadowCaster
 	float4 localPos : TEXCOORD4;
 	float3 normal : TEXCOORD5;
 	half3 viewDirForParallax : TEXCOORD6;
-	
 };
 
-float2 SelectUVSet(VertexInput v, int selection){
-	float2 uvs[] = {v.uv0, v.uv1, v.uv2, v.uv3, v.uv4};
-	return uvs[selection];
+float2 SelectUVSet(VertexInput v, int selection, int swizzle, float3 worldPos){
+	if (selection < 5){
+		float2 uvs[] = {v.uv0, v.uv1, v.uv2, v.uv3, v.uv4};
+		return uvs[selection];
+	}
+	else {
+		float2 uvs[] = {-worldPos.xy, -worldPos.xz, -worldPos.yz};
+		return uvs[swizzle];
+	}
+	return 0;
 }
 
-float2 GetAlphaMaskUV(VertexInput v){
+float2 GetAlphaMaskUV(VertexInput v, float3 worldPos){
 	#ifdef _ALPHAMASK_ON
-		float2 coords = Rotate2D(SelectUVSet(v, _UVAlphaMask), _UV4Rotate);
+		float2 coords = Rotate2DStandard(SelectUVSet(v, _UVAlphaMask, _UVAlphaMaskSwizzle, worldPos), _UV4Rotate);
 		coords = TRANSFORM_TEX(coords.xy, _AlphaMask);
 		coords += _Time.y * _UV4Scroll;
 	#else
 		float2 coords = 0;
 	#endif
+	return coords;
+}
+
+float2 GetMainTexUV(VertexInput v, float3 worldPos){
+	float2 coords = Rotate2DStandard(SelectUVSet(v, _UVPri, _UVPriSwizzle, worldPos), _UV0Rotate);
+	coords = TRANSFORM_TEX(coords.xy, _MainTex);
+	coords += _Time.y * _UV0Scroll;
 	return coords;
 }
 
@@ -206,21 +202,12 @@ void vertShadowCaster (VertexInput v
     #ifdef UNITY_STANDARD_USE_STEREO_SHADOW_OUTPUT_STRUCT
         UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(os);
     #endif
-	//VRSL Stuff
-    #if VRSL_ENABLED
-        uint dmx = GetDMXChannel();
-        float pan = GetPanValue(dmx);
-	    float tilt = GetTiltValue(dmx);
-        v.vertex = DMXMovement(v.vertex, v.color, 0, pan, tilt, _FixtureRotationOrigin);
-        v.normal = calculateRotations(float4(v.normal.x, v.normal.y, v.normal.z, 0), v.color, 1, pan, tilt, _FixtureRotationOrigin).xyz;
-        //v.tangent = calculateRotations(float4(v.tangent.x, v.tangent.y, v.tangent.z, 0), v.color, 1, pan, tilt, _FixtureRotationOrigin).xyz;
-    #endif
-    //End VRSL Stuff
     TRANSFER_SHADOW_CASTER_NOPOS(o,opos)
     #if defined(UNITY_STANDARD_USE_SHADOW_UVS)
-        o.tex = TRANSFORM_TEX(v.uv0, _MainTex);
+		float3 worldPos = mul(unity_ObjectToWorld, v.vertex);
+        o.tex = GetMainTexUV(v, worldPos);
 		o.tex1 = v.uv0;
-		o.tex2 = GetAlphaMaskUV(v);
+		o.tex2 = GetAlphaMaskUV(v, worldPos);
 		o.localPos = v.vertex;
 		o.normal = UnityObjectToWorldNormal(v.normal);
         #if defined(_PARALLAXMAP)

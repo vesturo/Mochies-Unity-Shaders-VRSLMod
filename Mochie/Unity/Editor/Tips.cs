@@ -33,7 +33,7 @@ namespace Mochie {
 		public static GUIContent reflOverrideText = new GUIContent("Reflection Override", "Override the primary reflection probe sample with this cubemap");
 		public static GUIContent ssrText = new GUIContent("Screen Space Reflections", "Screen Space Reflections create reflections on surfaces based on what's visible on screen.");
 		public static GUIContent edgeFadeText = new GUIContent("Edge Fade", "Fades SSR around the edges of the screen to avoid a hard cutoff visual.");
-		public static GUIContent stepsText = new GUIContent("Parallax Steps", "Number of steps/samples used to calculate parallax height. More samples is more expensive, but looks smoother.");
+		public static GUIContent stepsText = new GUIContent("Parallax Samples", "Number of steps/samples used to calculate parallax height. More samples is more expensive, but looks smoother.");
 		public static GUIContent maskText = new GUIContent("Mask");
 		public static GUIContent heightMaskText = new GUIContent("Height Mask");
 		public static GUIContent parallaxOfsText = new GUIContent("Parallax Offset", "Offsets the parallax height value up or down to hide artifacts.");
@@ -80,6 +80,7 @@ namespace Mochie {
 		public static GUIContent occlusionUVSetText = new GUIContent("UV Set");
 		public static GUIContent vertexBaseColorText = new GUIContent("Vertex Base Color", "Multiplies base color with vertex color.");
 		public static GUIContent unityFogToggleText = new GUIContent("Unity Scene Fog", "Enables or disables unity scene fog on this material.");
+		public static GUIContent mirrorNormalSwizzleText = new GUIContent("Normal Swizzle", "Determines the axis of offset when applying the normal maps to mirror based reflections. If reflections look broken or incorrect, try each of these options to see which matches the orientation of your surface.");
 
 		// Uber
 		public static GUIContent renderModeLabel = new GUIContent("Shading", "Enables or disables shading. If you aren't using any shading features, disabling this can provide a huge performance boost");
@@ -181,7 +182,7 @@ namespace Mochie {
 		public static GUIContent foamNormal = new GUIContent("Create Normals", "Automatically generates normals for the foam based on the grayscale value of the foam texture.");
 		public static GUIContent foamCrestStrength = new GUIContent("Crest Strength", "How visible foam is on the crests of gerstner waves.");
 		public static GUIContent foamCrestThreshold = new GUIContent("Crest Threshold", "How high or low a gerstner wave must be to have crest foam.");
-		public static GUIContent foamOpacity = new GUIContent("Opacity", "How visible the foam is on both crests and edges.");
+		public static GUIContent foamEdgeStrength = new GUIContent("Edge Strength", "How visible the foam is on the edges.");
 		public static GUIContent foamPower = new GUIContent("Edge Power", "Intensity of the edge foam gradient.");
 		public static GUIContent foamRoughness = new GUIContent("Roughness", "How rough the foam should be when calculating reflections and specular highlights.");
 		public static GUIContent foamNoiseTexCrestStrength = new GUIContent("Crest Noise", "How strongly the noise texture should affect crest foam.");
@@ -212,10 +213,5 @@ namespace Mochie {
 		public static GUIContent globalTint = new GUIContent("Global Tint", "Determines the color of the majority of effects in the shader.");
 		public static GUIContent emissionAO = new GUIContent("Emission (AO)", "Takes an ambient occlusion map and inverts it to determine emission. This is the same technique used by bungie for the effect in Destiny.");
 		public static GUIContent invertTint = new GUIContent("Invert Tint", "Uses an inverted copy of the base color texture to determine outline tint.");
-
-		//VRSL Stuff
-		public static GUIContent dmxEmissionMapTip = new GUIContent("DMX Emission Map/Mask", "An emission that determins where the DMX Emission will affect the mesh");
-		public static GUIContent nineUniverseMode = new GUIContent("9-Universe Mode", "Enable/Disable 9-Universe Mode Compatibility");
-		//End VRSL Stuff
 	}
 }

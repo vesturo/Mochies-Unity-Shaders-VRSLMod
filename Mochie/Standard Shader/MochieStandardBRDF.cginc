@@ -78,8 +78,10 @@ half4 BRDF1_Mochie_PBS (
 	#if SSR_ENABLED
 		half4 ssrCol = GetSSR(worldPos, viewDir, reflect(-viewDir, normal), normal, smoothness, diffColor, metallic, screenUVs, screenPos);
 		ssrCol.rgb *= _SSRStrength;
-		reflCol = lerp(reflCol, ssrCol.rgb, ssrCol.a);
-		specCol *= (1-smoothstep(0, 0.1, ssrCol.a));
+		if (_EdgeFade == 0)
+			ssrCol.a = ssrCol.a > 0 ? 1 : 0;
+		reflCol = lerp(reflCol, ssrCol.rgb, ssrCol.a * saturate(_SSRStrength));
+		specCol *= 1-ssrCol.a;
 	#endif
 
 	half3 subsurfaceCol = 0;
@@ -123,6 +125,7 @@ half4 BRDF1_Mochie_PBS (
 			lightmap *= _TintReflShad;
 			shadowedReflections = saturate(lerp(1, lightmap, _ReflShadowStrength));
 			reflCol *= shadowedReflections;
+			specCol *= shadowedReflections;
 		}
 	#else
 		shadowedReflections = lerp(1, lerp(1, atten, 0.9), _ReflShadows*_ReflShadowStrength);

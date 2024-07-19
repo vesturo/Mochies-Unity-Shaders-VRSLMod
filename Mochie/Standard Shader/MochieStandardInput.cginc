@@ -17,27 +17,12 @@
 #include "MochieStandardSampling.cginc"
 
 #if AREALIT_ENABLED
-	#include "Assets/AreaLit/Shader/Lighting.hlsl"
+	#include "../../AreaLit/Shader/Lighting.hlsl"
 #endif
 
 #if LTCGI_ENABLED
-	#include "Packages/at.pimaker.ltcgi/Shaders/LTCGI.cginc"
-<<<<<<< HEAD
+	#include "/Packages/at.pimaker.ltcgi/Shaders/LTCGI.cginc"
 #endif
-
-#ifdef _VRSL_GI
-    #include "Assets/VRSL Addons/VRSL-GI Shader Package/VRSLGI-Functions.cginc"
-=======
->>>>>>> 95d0bde4656da50a1e1060adf9761f5007c58fd9
-#endif
-
-//VRSL Stuff
-#if VRSL_ENABLED
-	#include "MochieVRSLDMX.cginc"
-#endif
-
-
-//End VRSL Stuff
 
 //---------------------------------------
 // Directional lightmaps & Parallax require tangent space too
@@ -164,21 +149,6 @@ float2			_UV5Scroll;
 int				_UVRainMask;
 int				_RainToggle;
 
-
-#ifdef _VRSL_GI
-	int			_VRSLGIInvertSmoothness;
-	half		_VRSLGISmoothnessBooster;
-	half		_VRSLGISmoothnessMapBlend;
-	half		_VRSLSmoothnessMultiplier;
- #endif
-
-int				UVShiftToggle;
-half			_UV0ShiftX;
-half			_UV0ShiftY;
-
-
-
-
 int _Filtering;
 int _UnityFogToggle;
 int _VertexBaseColor;
@@ -193,14 +163,13 @@ int _DetailUseSmoothness;
 int _ReflVertexColor;
 int _GSAA;
 
-#ifndef _VRSL_GI
-	float _LTCGIStrength;
-	float _AreaLitStrength;
-	float _AreaLitRoughnessMult;
-	sampler2D _AreaLitOcclusion;
-	float4 _AreaLitOcclusion_ST;
-	int _OcclusionUVSet;
-#endif
+float _LTCGIStrength;
+float _AreaLitStrength;
+float _AreaLitRoughnessMult;
+sampler2D _AreaLitOcclusion;
+float4 _AreaLitOcclusion_ST;
+int _OcclusionUVSet;
+int _ReflShadowAreaLit;
 
 sampler2D _RimMask;
 float4 _RimMask_ST;
@@ -231,6 +200,16 @@ int _RoughnessChannel, _MetallicChannel, _OcclusionChannel, _HeightChannel;
 int _DetailRoughnessMult, _DetailMetallicMult, _DetailOcclusionMult;
 int _DetailRoughnessChannel, _DetailMetallicChannel, _DetailOcclusionChannel;
 
+int _UVPriSwizzle;
+int _UVSecSwizzle;
+int _UVEmissMaskSwizzle;
+int _UVHeightMaskSwizzle;
+int _UVAlphaMaskSwizzle;
+int _UVRainMaskSwizzle;
+int _UVRimMaskSwizzle;
+int _UVDetailMaskSwizzle;
+int _MirrorNormalOffsetSwizzle;
+
 float3 shadowedReflections;
 
 #if MIRROR_ENABLED
@@ -256,17 +235,6 @@ float3 shadowedReflections;
 	int				_AudioLinkEmission;
 	float			_AudioLinkEmissionStrength;
 #endif
-
-//VRSL Stuff
-#if VRSL_ENABLED
-	Texture2D   	_DMXEmissionMap;
-	int				_ThirteenChannelMode;
-	int				_DMXEmissionMapMix;
-	float			_UniversalIntensity;
-	float4 			_FixtureRotationOrigin;
-	float			_FixtureMaxIntensity;
-#endif
-//End VRSL Stuff
 
 float GSAARoughness(float3 normal, float roughness){
 	float3 normalDDX = ddx(normal);
@@ -339,44 +307,29 @@ void InitializeAudioLink(inout audioLinkData al, float time){
 }
 #endif
 
-float2 SelectUVSet(VertexInput v, int selection){
-	float2 uvs[] = {v.uv0, v.uv1, v.uv2, v.uv3, v.uv4};
-	return uvs[selection];
+float2 SelectUVSet(VertexInput v, int selection, int swizzle, float3 worldPos){
+	if (selection < 5){
+		float2 uvs[] = {v.uv0, v.uv1, v.uv2, v.uv3, v.uv4};
+		return uvs[selection];
+	}
+	else {
+		float2 uvs[] = {-worldPos.xy, -worldPos.xz, -worldPos.yz};
+		return uvs[swizzle];
+	}
+	return 0;
 }
 
-
-#ifdef _VRSL_GI
-    float2 VRSLShadowMaskCoords(VertexInput v)
-    {
-        
-        float2 texcoord;
-        #if _VRSL_SHADOWMASK_UV0
-            texcoord = v.uv0; // Always source from uv0
-        #elif _VRSL_SHADOWMASK_UV1
-            texcoord = v.uv1;// Always source from uv0
-        #elif _VRSL_SHADOWMASK_UV2
-            texcoord = v.uv2; // Always source from uv0
-        #elif _VRSL_SHADOWMASK_UV3
-            texcoord = v.uv3; // Always source from uv0
-        #elif _VRSL_SHADOWMASK_UV4
-            texcoord = v.uv4; // Always source from uv0
-        #endif
-        return texcoord;
-    }
-#endif
-
-void TexCoords(VertexInput v, inout float4 texcoord, inout float4 texcoord1, inout float4 texcoord2, inout float4 texcoord3, inout float4 texcoord4)
+void TexCoords(VertexInput v, inout float4 texcoord, inout float4 texcoord1, inout float4 texcoord2, inout float4 texcoord3, inout float4 texcoord4, float3 worldPos)
 {
-	texcoord.xy = Rotate2D(SelectUVSet(v, _UVPri), _UV0Rotate);
+	texcoord.xy = Rotate2DStandard(SelectUVSet(v, _UVPri, _UVPriSwizzle, worldPos), _UV0Rotate);
 	texcoord.xy = TRANSFORM_TEX(texcoord.xy, _MainTex);
 	texcoord.xy += _Time.y * _UV0Scroll;
-	texcoord.xy+= float2(_UV0ShiftX * UVShiftToggle, _UV0ShiftY * UVShiftToggle);
 
-	texcoord.zw = Rotate2D((SelectUVSet(v, _UVSec)), _UV1Rotate);
+	texcoord.zw = Rotate2DStandard((SelectUVSet(v, _UVSec, _UVSecSwizzle, worldPos)), _UV1Rotate);
 	texcoord.zw = TRANSFORM_TEX(texcoord.zw, _DetailAlbedoMap);
 	texcoord.zw += _Time.y * _UV1Scroll;
 
-	texcoord4.zw = Rotate2D((SelectUVSet(v, _UVDetailMask)), _DetailRotate);
+	texcoord4.zw = Rotate2DStandard((SelectUVSet(v, _UVDetailMask, _UVDetailMaskSwizzle, worldPos)), _DetailRotate);
 	texcoord4.zw = TRANSFORM_TEX(texcoord4.zw, _DetailMask);
 	texcoord4.zw += _Time.y * _DetailScroll;
 
@@ -386,37 +339,37 @@ void TexCoords(VertexInput v, inout float4 texcoord, inout float4 texcoord1, ino
 	texcoord4 = float4(0,0,texcoord4.zw);
 
 	#ifdef _PARALLAXMAP
-		texcoord1.xy = TRANSFORM_TEX(SelectUVSet(v, _UVHeightMask), _ParallaxMask);
+		texcoord1.xy = TRANSFORM_TEX(SelectUVSet(v, _UVHeightMask, _UVHeightMaskSwizzle, worldPos), _ParallaxMask);
 		texcoord1.xy += _Time.y * _UV2Scroll;
 	#endif
 
 	#ifdef _EMISSION
-		texcoord1.zw = Rotate2D(SelectUVSet(v, _UVEmissMask), _UV3Rotate);
+		texcoord1.zw = Rotate2DStandard(SelectUVSet(v, _UVEmissMask, _UVEmissMaskSwizzle, worldPos), _UV3Rotate);
 		texcoord1.zw = TRANSFORM_TEX(texcoord1.zw, _EmissionMask);
 		texcoord1.zw += _Time.y * _UV3Scroll;
 	#endif
 
 	#ifdef _ALPHAMASK_ON
-		texcoord2.xy = Rotate2D(SelectUVSet(v, _UVAlphaMask), _UV4Rotate);
+		texcoord2.xy = Rotate2DStandard(SelectUVSet(v, _UVAlphaMask, _UVAlphaMaskSwizzle, worldPos), _UV4Rotate);
 		texcoord2.xy = TRANSFORM_TEX(texcoord2.xy, _AlphaMask);
 		texcoord2.xy += _Time.y * _UV4Scroll;
 	#endif
 
 	if (_RimToggle == 1){
-		texcoord2.zw = Rotate2D(SelectUVSet(v, _UVRimMask), _UVRimMaskRotate);
+		texcoord2.zw = Rotate2DStandard(SelectUVSet(v, _UVRimMask, _UVRimMaskSwizzle, worldPos), _UVRimMaskRotate);
 		texcoord2.zw = TRANSFORM_TEX(texcoord2.zw, _RimMask);
 		texcoord2.zw += _Time.y * _UVRimMaskScroll;
 	}
 
 	if (_RainToggle == 1){
 		texcoord3.xy = v.uv0;
-		texcoord3.zw = Rotate2D(SelectUVSet(v, _UVRainMask), _UV5Rotate);
+		texcoord3.zw = Rotate2DStandard(SelectUVSet(v, _UVRainMask, _UVRainMaskSwizzle, worldPos), _UV5Rotate);
 		texcoord3.zw = TRANSFORM_TEX(texcoord3.zw, _RainMask);
 		texcoord3.zw += _Time.y * _UV5Scroll;
 	}
 
 	#if AREALIT_ENABLED
-		texcoord4.xy = SelectUVSet(v, _OcclusionUVSet);
+		texcoord4.xy = SelectUVSet(v, _OcclusionUVSet, 0, 0);
 		texcoord4.xy = TRANSFORM_TEX(texcoord4.xy, _AreaLitOcclusion);
 	#endif
 }
@@ -581,59 +534,6 @@ half3 Emission(float2 uv, float2 uvMask, SampleData sd)
 		return 0;
 	#endif
 }
-
-half3 DMXEmission(float2 uv)
-{
-	#if VRSL_ENABLED
-		// float3 emissTex = SampleTexture(_DMXEmissionMap, uv, sd);
-		float3 emissionDMX = pow(getAltBaseEmission().rgb, 2.2);
-		float3 emissTex = emissionDMX * _FixtureMaxIntensity;
-		uint dmxChannel = GetDMXChannel();
-		float4 dmxColor = float4(1,1,1,1);
-		#if _VRSLTHIRTEENCHAN_ON
-			#ifdef _VRSL_LEGACY_TEXTURES
-				dmxColor = ReadDMX(dmxChannel +(uint)5, _OSCGridRenderTextureRAW) * GetDMXColor(dmxChannel+(uint)7);
-			#else
-				dmxColor = ReadDMX(dmxChannel +(uint)5, _Udon_DMXGridRenderTexture) * GetDMXColor(dmxChannel+(uint)7);
-			#endif
-			#if _STROBE_ON
-				float strobe = GetImmediateStrobeOutput(dmxChannel + (uint)6);
-				dmxColor *= strobe;
-			#endif
-		#else
-		//5-Channel Mode
-			#ifdef _VRSL_LEGACY_TEXTURES
-				dmxColor = ReadDMX(dmxChannel, _OSCGridRenderTextureRAW) * GetDMXColor(dmxChannel+(uint)1);
-			#else
-				dmxColor = ReadDMX(dmxChannel, _Udon_DMXGridRenderTexture) * GetDMXColor(dmxChannel+(uint)1);
-			#endif
-			#if _STROBE_ON
-				float strobe = GetImmediateStrobeOutput(dmxChannel + (uint)4);
-				dmxColor *= strobe;
-			#endif
-		#endif
-		emissTex = emissTex * dmxColor.rgb * getGlobalIntensity() * getFinalIntensity() * _UniversalIntensity;
-		emissTex = Filtering(emissTex, _HueEmiss, _SaturationEmiss, _BrightnessEmiss, _ContrastEmiss, 0);
-		return emissTex;
-	#else
-		return 0;
-	#endif
-}
-
-#if VRSL_ENABLED
-float4 DMXMovement(float4 input, float4 vertexColor, int normalsCheck, float pan, float tilt, float4 rotationOrigin)
-{
-	#if VRSL_ENABLED
-		#if _VRSLTHIRTEENCHAN_ON
-			return calculateRotations(input, vertexColor, normalsCheck, pan, tilt, rotationOrigin);
-		#else
-			return input;
-		#endif
-	#else
-		return input;
-	#endif
-}
-#endif
 
 void Rim(float3 worldPos, float3 normal, inout float3 col, float2 uv){
 	if (_RimToggle == 1){

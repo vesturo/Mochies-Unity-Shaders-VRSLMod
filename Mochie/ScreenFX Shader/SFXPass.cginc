@@ -30,12 +30,20 @@ v2f vert (appdata v){
 		o.olF = GetFalloff(_OLUseGlobal, gf, _OLMinRange, _OLMaxRange, o.objDist);
 	#endif
 
-    v.vertex.x *= 1.4;
+	if (unity_OrthoParams.w == 1){
+		v.vertex.y *= 10;
+		v.vertex.x *= 20;
+	}
+	else {
+		v.vertex.x *= 1.4;
+	}
+
     float4 wPos = mul(unity_CameraToWorld, v.vertex);
     float4 oPos = mul(unity_WorldToObject, wPos);
     o.raycast = UnityObjectToViewPos(oPos).xyz * float3(-1,-1,1);
-    o.pos = GetScreenspaceVertexPos(v.vertex);
 
+	o.worldPos = wPos;
+    o.pos = GetScreenspaceVertexPos(v.vertex);
     o.uv = ComputeGrabScreenPos(o.pos);
     o.uvd = TRANSFORM_TEX(v.uv, _NormalMap) + _Time.y * _DistortionSpeed;
 	audioLinkData ald = (audioLinkData)0;
@@ -60,6 +68,7 @@ float4 frag (v2f i) : SV_Target {
 
 	float2 uv = i.uv.xy / i.uv.w;
 	i.uv.xy = uv;
+	i.viewDir = normalize(_WorldSpaceCameraPos.xyz - i.worldPos);
 
 	audioLinkData ald = (audioLinkData)0;
 	#if AUDIOLINK_ENABLED
@@ -119,6 +128,11 @@ float4 frag (v2f i) : SV_Target {
 
 	#if NOISE_ENABLED
 		ApplyNoise(i, col.rgb, ald);
+	#endif
+
+	#if COLOR_ENABLED
+		if (_ClampToggle == 1)
+			col = clamp(col, 0, _ClampMax);
 	#endif
 
     ApplyTransparency(i, col);

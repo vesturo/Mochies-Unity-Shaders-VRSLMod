@@ -37,8 +37,4 @@
 
 #define MIRROR_ENABLED defined(_MIRROR_ON) && !defined(SHADER_API_MOBILE)
 
-//VRSL Stuff
-#define VRSL_ENABLED defined(_VRSL_ON)
-//End VRSL Stuff
-
 #endif // MOCHIE_STANDARD_KEYDEFINES_INCLUDED

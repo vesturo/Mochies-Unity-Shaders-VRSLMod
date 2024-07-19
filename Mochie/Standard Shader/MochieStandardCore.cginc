@@ -14,6 +14,7 @@
 #include "AutoLight.cginc"
 
 static float3 TangentNormal = float3(0,0,1);
+
 //-------------------------------------------------------------------------------------
 // counterpart for NormalizePerPixelNormal
 // skips normalization per-vertex and expects normalization to happen per-pixel
@@ -63,8 +64,10 @@ half3 Mirror_GlossyEnvironment(Unity_GlossyEnvironmentData glossIn, float4 reflU
     half perceptualRoughness = glossIn.roughness /* perceptualRoughness */ ;
     perceptualRoughness = perceptualRoughness*(1.7 - 0.7*perceptualRoughness);
     half mip = perceptualRoughnessToMipmapLevel(perceptualRoughness);
+    float3 normal = TangentNormal;
+	float2 normalSwizzle[3] = {normal.xy, normal.xz, normal.yz}; 
+	reflUV.xy -= normalSwizzle[_MirrorNormalOffsetSwizzle];
     float2 uv = reflUV.xy / (reflUV.w + 0.00000001);
-    uv += TangentNormal;
     float4 uvMip = float4(uv, 0, mip * 6);
     half3 refl = unity_StereoEyeIndex == 0 ? tex2Dlod(_ReflectionTex0, uvMip) : tex2Dlod(_ReflectionTex1, uvMip);
     return refl;
@@ -443,8 +446,10 @@ struct VertexOutputForwardBase
 	float4 localPos                       : TEXCOORD7;
     UNITY_LIGHTING_COORDS(8,9)
 
+    float3 posWorld                   : TEXCOORD10;
+
 	#if UNITY_REQUIRE_FRAG_WORLDPOS && !UNITY_PACK_WORLDPOS_WITH_TANGENT
-		float3 posWorld                   : TEXCOORD10;
+		
 	#endif
 	#if SSR_ENABLED
 		float4 screenPos                  : TEXCOORD11;
@@ -456,12 +461,6 @@ struct VertexOutputForwardBase
     float4 refl                           : TEXCOORD16;
     float4 tex3                           : TEXCOORD17;
     float4 tex4                           : TEXCOORD18;
-    #if VRSL_ENABLED
-    nointerpolation float3 dmxColor       : TEXCOORD19;
-    #endif
-    #ifdef _VRSL_GI
-        float2 shadowMaskUV               : TEXCOORD20;
-    #endif
 	float4 color                          : COLOR;
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
@@ -475,20 +474,6 @@ VertexOutputForwardBase vertForwardBase (VertexInput v)
     UNITY_TRANSFER_INSTANCE_ID(v, o);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
-    #ifdef _VRSL_GI
-       o.shadowMaskUV = VRSLShadowMaskCoords(v);
-    #endif
-
-    //VRSL Stuff
-    #if VRSL_ENABLED
-        uint dmx = GetDMXChannel();
-        float pan = GetPanValue(dmx);
-	    float tilt = GetTiltValue(dmx);
-        v.vertex = DMXMovement(v.vertex, v.color, 0, pan, tilt, _FixtureRotationOrigin);
-        v.normal = calculateRotations(float4(v.normal.x, v.normal.y, v.normal.z, 0), v.color, 1, pan, tilt, _FixtureRotationOrigin).xyz;
-    #endif
-    //End VRSL Stuff
-
     float4 posWorld = mul(unity_ObjectToWorld, v.vertex);
     #if UNITY_REQUIRE_FRAG_WORLDPOS
         #if UNITY_PACK_WORLDPOS_WITH_TANGENT
@@ -499,13 +484,12 @@ VertexOutputForwardBase vertForwardBase (VertexInput v)
             o.posWorld = posWorld.xyz;
         #endif
     #endif
-
     o.pos = UnityObjectToClipPos(v.vertex);
 	o.localPos = v.vertex;
 	o.color = v.color;
     o.rawUV.xy = v.uv0;
     o.rawUV.zw = v.uv1;
-    TexCoords(v, o.tex, o.tex1, o.tex2, o.tex3, o.tex4);
+    TexCoords(v, o.tex, o.tex1, o.tex2, o.tex3, o.tex4, posWorld);
     o.eyeVec.xyz = NormalizePerVertexNormal(posWorld.xyz - _WorldSpaceCameraPos);
     float3 normalWorld = UnityObjectToWorldNormal(v.normal);
     #ifdef _TANGENT_TO_WORLD
@@ -539,14 +523,6 @@ VertexOutputForwardBase vertForwardBase (VertexInput v)
 	#endif
  
     o.refl = ComputeNonStereoScreenPos(o.pos);
-
-    //VRSL Stuff
-    #if VRSL_ENABLED
-        o.dmxColor = DMXEmission(o.tex.xy);
-    #endif
-
-
-    //End VRSL Stuff
 
     UNITY_TRANSFER_FOG_COMBINED_WITH_EYE_VEC(o,o.pos);
     return o;
@@ -659,11 +635,7 @@ half4 fragForwardBaseInternal (VertexOutputForwardBase i, bool frontFace)
     UNITY_SETUP_INSTANCE_ID(i);
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
 
-    // #if  defined(_AREALIT_USE_GI_UVS) && defined(_VRSL_GI) 
-        // half3 occlusion = Occlusion(i.tex, i.shadowMaskUV.xy, sd);
-    // #else
-        half3 occlusion = Occlusion(i.tex, i.tex4.zw, sd);
-    // #endif
+    half3 occlusion = Occlusion(i.tex, i.tex4.zw, sd);
     float perceptualRoughness = SmoothnessToPerceptualRoughness(s.smoothness);
     if (_GSAA == 1)
         perceptualRoughness = GSAARoughness(s.normalWorld, perceptualRoughness);
@@ -671,11 +643,7 @@ half4 fragForwardBaseInternal (VertexOutputForwardBase i, bool frontFace)
     float clampedRoughness = max(roughness, 0.002);
 
     #if AREALIT_ENABLED
-        #if  defined(_AREALIT_USE_GI_UVS) && defined(_VRSL_GI) 
-            float4 alOcclusion = MOCHIE_SAMPLE_TEX2D_SAMPLER(_AreaLitOcclusion, VRSL_BilinearClampSampler, i.shadowMaskUV.xy);
-        #else
-            float4 alOcclusion = tex2D(_AreaLitOcclusion,i.tex4);
-        #endif
+        float4 alOcclusion = tex2D(_AreaLitOcclusion, i.tex4);
         AreaLightFragInput ai;
         ai.pos = s.posWorld;
         ai.normal = s.normalWorld;
@@ -784,28 +752,11 @@ half4 fragForwardBaseInternal (VertexOutputForwardBase i, bool frontFace)
 				s.metallic, s.thickness, s.subsurfaceColor, atten, i.ambientOrLightmapUV, i.color, gi.light, gi.indirect
 			);
 
-    #if _VRSL_GI
-        float2 mg = float2(s.metallic, 1-s.smoothness);
-        mg = clamp(mg, 0.025, 0.95);
-        c.rgb += VRSLGI(s.posWorld, s.normalWorld, _VRSLGlossiness, -s.eyeVec, max(s.diffColor, float3(0.005, 0.005, 0.005)), mg, i.shadowMaskUV.xy, occlusion);
-    #endif
-
     c.rgb += Emission(i.tex.xy, i.tex1.zw, sd);
-    #if VRSL_ENABLED
-        float3 emissionMap = SampleTexture(_DMXEmissionMap, i.tex.xy, sd);
-        // #if _VRSL_MIX_MULT
-            c.rgb += (i.dmxColor * emissionMap);
-        // #elif _VRSL_MIX_ADD
-        //     c.rgb += (i.dmxColor + emissionMap);
-        // #elif _VRSL_MIX_MIX
-        //     float mixture = (emissionMap.r + emissionMap.g + emissionMap.b)/3;
-        //     c.rgb += lerp(emissionMap, emissionMap * i.dmxColor, mixture);
-        // #endif
-    #endif
 
     #if AREALIT_ENABLED
         float3 areaLitColor = s.diffColor * diffTerm + s.specColor * specTerm;
-        if (_ReflShadows == 1)
+        if (_ReflShadows == 1 && _ReflShadowAreaLit == 1)
             areaLitColor *= shadowedReflections;
         c.rgb += areaLitColor * _AreaLitStrength;
     #endif
@@ -855,24 +806,13 @@ VertexOutputForwardAdd vertForwardAdd (VertexInput v)
     UNITY_INITIALIZE_OUTPUT(VertexOutputForwardAdd, o);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
-    //VRSL Stuff
-    #if VRSL_ENABLED
-        uint dmx = GetDMXChannel();
-        float pan = GetPanValue(dmx);
-	    float tilt = GetTiltValue(dmx);
-        v.vertex = DMXMovement(v.vertex, v.color, 0, pan, tilt, _FixtureRotationOrigin);
-        v.normal = calculateRotations(float4(v.normal.x, v.normal.y, v.normal.z, 0), v.color, 1, pan, tilt, _FixtureRotationOrigin).xyz;
-        //v.tangent = calculateRotations(float4(v.tangent.x, v.tangent.y, v.tangent.z, 0), v.color, 1, pan, tilt, _FixtureRotationOrigin).xyz;
-    #endif
-    //End VRSL Stuff
-
     float4 posWorld = mul(unity_ObjectToWorld, v.vertex);
     o.pos = UnityObjectToClipPos(v.vertex);
 	o.localPos = v.vertex;
 
     o.rawUV.xy = v.uv0;
     o.rawUV.zw = v.uv1;
-    TexCoords(v, o.tex, o.tex1, o.tex2, o.tex3, o.tex4);
+    TexCoords(v, o.tex, o.tex1, o.tex2, o.tex3, o.tex4, posWorld);
     o.eyeVec.xyz = NormalizePerVertexNormal(posWorld.xyz - _WorldSpaceCameraPos);
     o.posWorld = posWorld.xyz;
     float3 normalWorld = UnityObjectToWorldNormal(v.normal);

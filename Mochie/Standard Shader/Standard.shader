@@ -98,15 +98,23 @@ Shader "Mochie/Standard" {
 		_DetailMetallicMap("Detail Metallic Map", 2D) = "white" {}
 		[Enum(Add,0, Alpha,1, Mul,2, Mulx2,3, Overlay,4, Screen,5, Lerp,6)]_DetailMetallicBlend("Detail Metallic Blend", Int) = 2
 
-		[Enum(UV0,0,UV1,1, UV2,2, UV3,3, UV4,4)]_UVPri("UV Set for primary textures", Float) = 0
-        [Enum(UV0,0,UV1,1, UV2,2, UV3,3, UV4,4)]_UVSec("UV Set for secondary textures", Float) = 0
-		[Enum(UV0,0,UV1,1, UV2,2, UV3,3, UV4,4)]_UVEmissMask("UV Set for Emission Mask", Float) = 0
-		[Enum(UV0,0,UV1,1, UV2,2, UV3,3, UV4,4)]_UVHeightMask("UV Set for height mask", Float) = 0
-		[Enum(UV0,0,UV1,1, UV2,2, UV3,3, UV4,4)]_UVAlphaMask("UV Set for alpha mask", Float) = 0
+		[Enum(UV0,0, UV1,1, UV2,2, UV3,3, UV4,4, World,5)]_UVPri("UV Set for primary textures", Float) = 0
+		[Enum(XY,0, XZ,1, YZ,2)]_UVPriSwizzle("Swizzle", Int) = 0
+        [Enum(UV0,0, UV1,1, UV2,2, UV3,3, UV4,4, World,5)]_UVSec("UV Set for secondary textures", Float) = 0
+		[Enum(XY,0, XZ,1, YZ,2)]_UVSecSwizzle("Swizzle", Int) = 0
+		[Enum(UV0,0, UV1,1, UV2,2, UV3,3, UV4,4, World,5)]_UVEmissMask("UV Set for Emission Mask", Float) = 0
+		[Enum(XY,0, XZ,1, YZ,2)]_UVEmissMaskSwizzle("Swizzle", Int) = 0
+		[Enum(UV0,0, UV1,1, UV2,2, UV3,3, UV4,4, World,5)]_UVHeightMask("UV Set for height mask", Float) = 0
+		[Enum(XY,0, XZ,1, YZ,2)]_UVHeightMaskSwizzle("Swizzle", Int) = 0
+		[Enum(UV0,0, UV1,1, UV2,2, UV3,3, UV4,4, World,5)]_UVAlphaMask("UV Set for alpha mask", Float) = 0
+		[Enum(XY,0, XZ,1, YZ,2)]_UVAlphaMaskSwizzle("Swizzle", Int) = 0
 		[Enum(Red,0, Green,1, Blue,2, Alpha,3)]_AlphaMaskChannel("Alpha Mask Channel", Int) = 3
-		[Enum(UV0,0,UV1,1, UV2,2, UV3,3, UV4,4)]_UVRainMask("UV Set for rain mask", Float) = 0
-		[Enum(UV0,0,UV1,1, UV2,2, UV3,3, UV4,4)]_UVRimMask("UV Set for rim mask", Float) = 0
-		[Enum(UV0,0,UV1,1, UV2,2, UV3,3, UV4,4)]_UVDetailMask("UV Set for detail mask", Float) = 0
+		[Enum(UV0,0, UV1,1, UV2,2, UV3,3, UV4,4, World,5)]_UVRainMask("UV Set for rain mask", Float) = 0
+		[Enum(XY,0, XZ,1, YZ,2)]_UVRainMaskSwizzle("Swizzle", Int) = 0
+		[Enum(UV0,0, UV1,1, UV2,2, UV3,3, UV4,4, World,5)]_UVRimMask("UV Set for rim mask", Float) = 0
+		[Enum(XY,0, XZ,1, YZ,2)]_UVRimMaskSwizzle("Swizzle", Int) = 0
+		[Enum(UV0,0, UV1,1, UV2,2, UV3,3, UV4,4, World,5)]_UVDetailMask("UV Set for detail mask", Float) = 0
+		[Enum(XY,0, XZ,1, YZ,2)]_UVDetailMaskSwizzle("Swizzle", Int) = 0
 
 		[ToggleUI]_Filtering("Filtering", Int) = 0
 		_Hue("Hue", Range(0,1)) = 0
@@ -136,6 +144,7 @@ Shader "Mochie/Standard" {
 		_ReflCubeOverride("Reflection Override", CUBE) = "" {}
 		_CubeThreshold("Threshold", Range(0.0001,1)) = 0.45
 		_EdgeFade("Edge Fade", Range(0,1)) = 0.1
+		[ToggleUI]_EdgeFadeToggle("Edge Fade Toggle", Int) = 1
 		
 		[ToggleUI]_Subsurface("Subsurface Scattering", Int) = 0
 		[ToggleUI]_ScatterAlbedoTint("Scatter Albedo Tint", Int) = 0
@@ -159,10 +168,6 @@ Shader "Mochie/Standard" {
 		_UVRimMaskScroll("Scrolling", Vector) = (0,0,0,0)
 		_UVRimMaskRotate("Rotation", Float) = 0
 
-		[ToggleUI]UVShiftToggle("Enable", Int) = 0
-		_UV0ShiftX("UV0 Shift X", Float) = 0
-		_UV0ShiftY("UV0 Shift Y", Float) = 0
-
 		_MetaCull("", Int) = 0
 		[Enum(UnityEngine.Rendering.CullMode)]_Cull("", Int) = 2
 		[ToggleOff]_SpecularHighlights("Specular Highlights", Float) = 1.0
@@ -170,6 +175,7 @@ Shader "Mochie/Standard" {
 		[ToggleUI]_SSR("Screenspace Reflections", Int) = 0
 		[Enum(Off,0, On,1)]_UseHeight("Use Heightmap", Int) = 0
 		[ToggleUI]_ReflShadows("Shadowed Reflections", Int) = 0
+		[ToggleUI]_ReflShadowAreaLit("Shadowed Reflections AreaLit", Int) = 1
 		[ToggleUI]_ReflVertexColor("Vertex Color Reflections", Int) = 0
 		[ToggleUI]_GSAA("GSAA", Int) = 0
 		[Enum(Off,0, On,1)]_UseSmoothness("Use Smoothness", Int) = 0
@@ -235,104 +241,11 @@ Shader "Mochie/Standard" {
 		[HideInInspector]_NaNLmao("lol", Float) = 0
 
 		[ToggleUI]_MirrorToggle("Mirror Mode", Int) = 0
+		[Enum(XY,0, XZ,1, YZ,2)]_MirrorNormalOffsetSwizzle("Swizzle", Int) = 0
 		[ToggleUI]_UnityFogToggle("Unity Fog", Int) = 1
 		[HideInInspector] _ReflectionTex0("", 2D) = "white" {}
         [HideInInspector] _ReflectionTex1("", 2D) = "white" {}
 
-
-		//VRSL Stuff
-		[ToggleUI] _VRSLToggle ("Enable VRSL", Int) = 0
-		[ToggleUI] _DMXEmissionMapMix ("Mixture", Int) = 0
-		[ToggleUI] _UseLegacyDMXTextures ("Legacy DMX Textures", Int) = 0
-		[Toggle(_AREALIT_USE_GI_UVS)] _AreaLitUseGIUvs ("Area Lit Use GI UVs", Int) = 0
-
-		[NoScaleOffset] _OSCGridRenderTextureRAW("OSC Grid Render Texture (RAW Unsmoothed)", 2D) = "white" {}
-		[NoScaleOffset] _OSCGridRenderTexture("OSC Grid Render Texture (To Control Lights)", 2D) = "white" {}
-		[NoScaleOffset] _OSCGridStrobeTimer ("OSC Grid Render Texture (For Strobe Timings", 2D) = "white" {}
-
-		[ToggleUI] _ThirteenChannelMode ("13-Channel Mode", Int) = 0
-		_DMXChannel ("Starting DMX Channel", Int) = 0
-		_DMXEmissionMap("DMX Emission Map", 2D) = "white" {}
-		[ToggleUI] _NineUniverseMode ("Extended Universe Mode", Int) = 0
-		[ToggleUI] _PanInvert ("Invert Mover Pan", Int) = 0
-		[ToggleUI] _TiltInvert ("Invert Mover Tilt", Int) = 0
-		[ToggleUI] _EnablePanMovement ("Enable Pan Movement", Int) = 0
-		[ToggleUI] _EnableTiltMovement ("Enable Tilt Movement", Int) = 0
-		[ToggleUI] _EnableStrobe ("Enable Strobe", Int) = 0
-		[ToggleUI] _EnableVerticalMode ("Enable Vertical Mode", Int) = 0
-		[ToggleUI] _EnableCompatibilityMode ("Enable Compatibility Mode", Int) = 0
-		_FixtureBaseRotationY("Mover Pan Offset (Blue + Green)", Range(-540,540)) = 0
-		_FixtureRotationX("Mover Tilt Offset (Blue)", Range(-180,180)) = 0
-		_FinalIntensity("Final Intensity", Range(0,1)) = 1
-		_GlobalIntensity("Global Intensity", Range(0,1)) = 1
-		_UniversalIntensity ("Universal Intensity", Range (0,1)) = 1
-		_FixtureRotationOrigin("Fixture Pivot Origin", Float) = (0, 0.014709, -1.02868, 0)
-		_MaxMinPanAngle("Max/Min Pan Angle (-x, x)", Float) = 180
-		_MaxMinTiltAngle("Max/Min Tilt Angle (-y, y)", Float) = 180
-		_FixtureMaxIntensity ("Maximum Cone Intensity",Range (0,10)) = 1.0
-		[HDR]_EmissionDMX("Color", Color) = (1,1,1)
-		//End VRSL Stuff
-
-
-
-
-		        [ToggleOff] useVRSLGI("Use VRSL GI", Float) = 0.0
-        [ToggleOff] _UseGlobalVRSLLightTexture("Use Global VRSL Light Texture", Float) = 0.0
-        [ToggleOff] useVRSLGISpecular("Use VRSL GI Specular", Float) = 1.0
-        _VRSLDiffuseMix ("VRSL Diffuse Mix", Range(0, 1)) = 1.0
-        _VRSLMetallicGlossMap("VRSL Metallic Gloss Map", 2D) = "white" {}
-        [ToggleUI] _UseVRSLMetallicGlossMap ("Use VRSL Metallic Gloss Map", Int) = 0
-        _VRSLMetallicMapStrength("VRSL Metallic Map Mix",  Range(0.0, 1.0)) = 1.0
-        _VRSLGlossMapStrength("VRSL Gloss Map Mix",  Range(0.0, 1.0)) = 1.0
-        _VRSLSpecularShine("VRSL Specular Shine",  Range(0.0, 1.0)) = 1.0
-        _VRSLGlossiness("VRSL Smoothness", Range(0, 1)) = 1
-        _VRSLSpecularStrength("VRSL Specular Strength", Range(0.0, 1.0)) = 0.5
-        _VRSLGIStrength("GI Strength", Range(0.1, 500)) = 1.0
-        _VRSLSpecularMultiplier("Specular Multiplier", Range(1, 10)) = 1.0
-		_VRSLSmoothnessMultiplier("Smoothness Multiplier", Range(0, 10)) = 1.0
-
-		[ToggleUI] _VRSLGIInvertSmoothness ("Invert VRSL GI Smoothness", Int) = 0
-		_VRSLGISmoothnessBooster("VRSL GI General Smoothness", Range(0.0, 1.0)) = 0
-		_VRSLGISmoothnessMapBlend("VRSL GI Smoothness Map Blend", Range(0.0, 1.0)) = 1
-
-		[ToggleUI] _UseVRSLShadowMask1 ("Use VRSL Shadow Mask 1", Int) = 0
-        [NoScaleOffset] _VRSLShadowMask1("VRSL GI ShadowMask 1", 2D) = "white" {}
-        _UseVRSLShadowMask1RStrength("VRSL SM 1 R Strength", Range(0.0, 1.0)) = 1.0
-        _UseVRSLShadowMask1GStrength("VRSL SM 1 G Strength", Range(0.0, 1.0)) = 1.0
-        _UseVRSLShadowMask1BStrength("VRSL SM 1 B Strength", Range(0.0, 1.0)) = 1.0
-        _UseVRSLShadowMask1AStrength("VRSL SM 1 A Strength", Range(0.0, 1.0)) = 1.0
-        [ToggleUI] _UseVRSLShadowMask2 ("Use VRSL Shadow Mask 2", Int) = 0
-        [NoScaleOffset] _VRSLShadowMask2("VRSL GI ShadowMask 2", 2D) = "white" {}
-        _UseVRSLShadowMask2RStrength("VRSL SM 2 R Strength", Range(0.0, 1.0)) = 1.0
-        _UseVRSLShadowMask2GStrength("VRSL SM 2 G Strength", Range(0.0, 1.0)) = 1.0
-        _UseVRSLShadowMask2BStrength("VRSL SM 2 B Strength", Range(0.0, 1.0)) = 1.0
-        _UseVRSLShadowMask2AStrength("VRSL SM 2 A Strength", Range(0.0, 1.0)) = 1.0
-        [ToggleUI] _UseVRSLShadowMask3 ("Use VRSL Shadow Mask 3", Int) = 0
-        [NoScaleOffset] _VRSLShadowMask3("VRSL GI ShadowMask 3", 2D) = "white" {}
-        _UseVRSLShadowMask3RStrength("VRSL SM 3 R Strength", Range(0.0, 1.0)) = 1.0
-        _UseVRSLShadowMask3GStrength("VRSL SM 3 G Strength", Range(0.0, 1.0)) = 1.0
-        _UseVRSLShadowMask3BStrength("VRSL SM 3 B Strength", Range(0.0, 1.0)) = 1.0
-        _UseVRSLShadowMask3AStrength("VRSL SM 3 A Strength", Range(0.0, 1.0)) = 1.0
-        [ToggleUI] _VRSLInvertSmoothnessMap("VRSL GI Invert Smoothness Map", Float) = 0.0 
-        [ToggleUI] _VRSLInvertMetallicMap("VRSL GI Invert Metallic Map", Float) = 0.0
-		[Enum(R,0,RG,1,RGB,2,RGBA,3)] _ShadowMaskActiveChannels ("Shadow Mask Active Channels", Int) = 0
-
-        [Enum(GGX,0, Beckman,1, Blinn Phong,2)]_VRSLSpecularFunction("VRSL Specular Function", Int) = 0
-
-        [Enum(UV0,0,UV1,1, UV2,2, UV3,3, UV4,4)]_VRSLShadowMaskUVSet("UV Set for occlusion map", Float) = 1
-
-		
-        _VRSLGISpecularClamp("VRSL GI Specular Clamp", Range(1.0, 50000.0)) = 50000
-        _VRSLGIDiffuseClamp("VRSL GI Diffuse Clamp", Range(1.0, 10000.0)) = 10000
-
-        [NoScaleOffset] _VRSL_LightTexture("VRSL Light Texture", 2D) = "white" {}
-        [NoScaleOffset] _VRSL_LightCounter("VRSL Light Counter Texture", 2D) = "white" {}
-		[Enum(R,0,G,1,B,2,A,3)] _VRSLMetallicChannel ("Metallic texture channel", Float) = 0
-		[Enum(R,0,G,1,B,2,A,3)] _VRSLSmoothnessChannel ("Smoothness texture channel", Float) = 3
-
-		
-
-		
 		// [HideInInspector] BAKERY_META_ALPHA_ENABLE ("Enable Bakery alpha meta pass", Float) = 1.0
     }
 
@@ -369,19 +282,6 @@ Shader "Mochie/Standard" {
 			#pragma vertex vertBase
             #pragma fragment fragBase
 			#define MOCHIE_STANDARD
-			#define VRLSGI_USE_BUILTIN_SPECULAR
-
-            #pragma shader_feature_local _VRSL_GI
-            #pragma shader_feature_local _VRSL_GI_SPECULARHIGHLIGHTS
-            #pragma shader_feature_local _VRSL_SPECFUNC_GGX _VRSL_SPECFUNC_BECKMAN _VRSL_SPECFUNC_PHONG
-            #pragma shader_feature_local _VRSL_SHADOWMASK_UV0 _VRSL_SHADOWMASK_UV1 _VRSL_SHADOWMASK_UV2 _VRSL_SHADOWMASK_UV3 _VRSL_SHADOWMASK_UV4
-            #pragma shader_feature_local _VRSL_SHADOWMASK1
-			#pragma shader_feature_local _VRSL_SHADOWMASK2
-            //#pragma shader_feature_local _VRSL_SHADOWMASK3
-			#pragma shader_feature_local _ _VRSL_SHADOWMASK_RG _VRSL_SHADOWMASK_RGB _VRSL_SHADOWMASK_RGBA
-
-
-
 			#pragma shader_feature_local _WORKFLOW_PACKED_ON
 			#pragma shader_feature_local _DETAIL_WORKFLOW_PACKED_ON
             #pragma shader_feature_local _NORMALMAP
@@ -411,13 +311,11 @@ Shader "Mochie/Standard" {
 			#pragma shader_feature_local BAKERY_SHNONLINEAR
 			#pragma shader_feature_local _OPAQUELIGHTS_OFF
 			#pragma shader_feature_local _AREALIT_ON
-			#pragma shader_feature_local _AREALIT_USE_GI_UVS
 			#pragma shader_feature_local _MIRROR_ON
-			#pragma shader_feature_local LOD_FADE_CROSSFADE
+			// #pragma multi_compile _ LOD_FADE_CROSSFADE
 			#pragma multi_compile_fog
             #pragma multi_compile_fwdbase
             #pragma multi_compile_instancing
-			#define VRSL_ENABLED defined(_VRSL_ON)
             #include "MochieStandardCoreForward.cginc"
             ENDCG
         }
@@ -450,7 +348,7 @@ Shader "Mochie/Standard" {
 			#pragma shader_feature_local _DETAIL_METALLIC_ON
 			#pragma shader_feature_local _DETAIL_SAMPLEMODE_ON
 			#pragma shader_feature_local _ALPHAMASK_ON
-			#pragma shader_feature_local LOD_FADE_CROSSFADE
+			// #pragma multi_compile _ LOD_FADE_CROSSFADE
 			#pragma multi_compile_fog
             #pragma multi_compile_fwdadd_fullshadows
 			#pragma multi_compile_instancing
@@ -477,7 +375,7 @@ Shader "Mochie/Standard" {
 			#pragma shader_feature_local _ _STOCHASTIC_ON _TSS_ON _TRIPLANAR_ON
 			#pragma shader_feature_local _ _DETAIL_STOCHASTIC_ON _DETAIL_TSS_ON _DETAIL_TRIPLANAR_ON
 			#pragma shader_feature_local _ALPHAMASK_ON
-			#pragma shader_feature_local LOD_FADE_CROSSFADE
+			// #pragma multi_compile _ LOD_FADE_CROSSFADE
             #pragma multi_compile_shadowcaster
             #pragma multi_compile_instancing
 			#pragma skip_variants FOG_LINEAR FOG_EXP FOG_EXP2
@@ -512,13 +410,6 @@ Shader "Mochie/Standard" {
 			#pragma shader_feature_local _AUDIOLINK_ON
 			#pragma shader_feature_local _AUDIOLINK_META_ON
             #pragma shader_feature EDITOR_VISUALIZATION
-			//VRSL Stuff
-			#pragma shader_feature_local _VRSL_ON
-			#pragma shader_feature_local _VRSLTHIRTEENCHAN_ON
-			#pragma shader_feature_local _VRSLPAN_ON
-			#pragma shader_feature_local _VRSLTILT_ON
-			#pragma shader_feature_local _STROBE_ON
-			//End VRSL Stuff
             #include "MochieStandardMeta.cginc"
             ENDCG
         }
